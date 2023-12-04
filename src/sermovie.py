@@ -1,3 +1,23 @@
+# coding: utf-8
+
+"""
+SER Decoder (see https://www.grischa-hahn.homepage.t-online.de/astro/ser/  ).
+
+Copyright (C) 2023 Sergio Díaz, sergiodiaz.eu
+
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+more details.
+
+You should have received a copy of the GNU General Public License along with
+this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import numpy as np
 from datetime import datetime
 import warnings
@@ -8,11 +28,12 @@ class SERMovie:
     Simple class for reading SER movie files, with timestamp support.
 
     Based on:
-    https://www.grischa-hahn.homepage.t-online.de/astro/ser/
-    https://github.com/bob-anderson-ok/pymovie/blob/master/src/pymovie/SER.py
-    https://github.com/Copper280z/pySER-Reader/blob/master/ser_reader.py
+    - [Grischa Hahn's SER Specs](https://www.grischa-hahn.homepage.t-online.de/astro/ser/)
+    - [PyMovie](https://github.com/bob-anderson-ok/pymovie/blob/master/src/pymovie/SER.py)
+    - [pySER-Reader](https://github.com/Copper280z/pySER-Reader/blob/master/ser_reader.py)
 
     Usage example:
+
         from sermovie import SERMovie
         import matplotlib.pyplot as plt
 
@@ -44,34 +65,49 @@ class SERMovie:
     ----------
     color_modes : dict
         dictionary with supported color modes
+
     color : str
         color mode of the current file (see color_modes)
+
     planes : int
         number of planes of each frame
+
     endian : str
         'little' or 'big'
+
     width : int
         width of each frame, in pixels
+
     height : int
         height of each frame, in pixels
+
     bpp : int
         bits per plane, 8 or 16
+
     shape : tuple
         tuple (height, width, planes), or (height, width) if planes==1
+
     frame_pixels : int
         total number of pixel in each frame
+
     frame_bytes : int
         frame size in bytes
+
     observer : str
         observer field (40 bytes max)
+
     instrument : str
         instrument field (40 bytes max)
+
     telescope : str
         telescope field (40 bytes max)
+
     datetime : datetime
         start date/time of image stream, in local time
+
     datetime_utc : datetime
         start date/time of image stream, in UTC
+        
     timestamps_utc : np.array[datetime64]
         numpy array including timestamps for all frames, if present
 
