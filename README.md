@@ -4,7 +4,7 @@
 
 SER Decoder (see https://www.grischa-hahn.homepage.t-online.de/astro/ser/  ).
 
-Copyright (C) 2023 Sergio Díaz, sergiodiaz.eu
+Copyright (C) 2023 Sergio Diaz, sergiodiaz.eu
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the

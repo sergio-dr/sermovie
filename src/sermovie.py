@@ -3,7 +3,7 @@
 """
 SER Decoder (see https://www.grischa-hahn.homepage.t-online.de/astro/ser/  ).
 
-Copyright (C) 2023 Sergio Díaz, sergiodiaz.eu
+Copyright (C) 2023 Sergio Diaz, sergiodiaz.eu
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -206,11 +206,12 @@ class SERMovie:
 
     @staticmethod
     def timestamp(tdelta64_100ns):
-        # tdelta64_100ns: los timestamps de la cola del fichero .ser vienen en unidades de 100ns;
-        # datetime soporta hasta microsegundos; aquí simplemente desechamos el último dígito ya
-        # que tampoco no trabajamos con tanta resolución temporal
-        # Vectorización de: timedelta(microseconds=tdelta64_100ns//10) + datetime(1, 1, 1)
-        # Nota: numpy.datetime64 no almacena timezone, no tiene sentido hacer datetime(1,1,1,tzinfo=timezone.utc)
+        # tdelta64_100ns: timestamps at the trailer of the .ser file are expressed in 100ns units
+        # datetime support up to microsecond resolution; here we simply truncate the last digit
+        # because we won't be working as such time resolution anyway.
+        # This is a vectorized version of: timedelta(microseconds=tdelta64_100ns//10) + datetime(1, 1, 1)
+        # Note: numpy.datetime64 won't store timezone info, so it does makes sense to create the 
+        # reference date as datetime(1, 1, 1, tzinfo=timezone.utc)
         return (tdelta64_100ns // 10).astype("timedelta64[us]") + np.datetime64(
             datetime(1, 1, 1)
         )
