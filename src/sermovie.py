@@ -43,24 +43,26 @@ class SERMovie:
         print(m)  # Header info
 
         # For reading frames, some options:
-        # 1) Directly, outside context: open, read data then close the file
-        im = m.getFrame(0)
+        # 1) Directly, outside context: get_frame() opens the file, reads
+        # one frame and automatically closes the file
+        im = m.get_frame(0)
         print(im.shape)
         plt.imshow(im)
 
         # 2) Within context: the file is only opened at the beginning and
-        # closed at the end (better if getting multiple frames)
+        # closed at the end of the context. This is better than the
+        # previous option when accessing to multiple frames.
         with m:
-            im = m.getFrame(0)
-            print(im.shape)
-            plt.imshow(im)
+            im0 = m.get_frame(0)
+            im1 = m.get_frame(1)
+            plt.imshow(im1-im0)
 
         # 3) Access frames via memmap, so you can access all the stream
         # as a big array where frames can be indexed by the first axis
         # (slices and advanced indexing are supported)
-        im = m.as_memmap()
-        print(im.shape)
-        plt.imshow(im[0, ...])
+        ims = m.as_memmap()
+        print(ims.shape)
+        plt.imshow(ims[0, ...])
 
 
     Attributes
@@ -104,13 +106,15 @@ class SERMovie:
     telescope : str
         telescope field (40 bytes max)
 
-    datetime : datetime
+    datetime : numpy.datetime64
         start date/time of image stream, in local time
+        Use .item() to convert to datetime
 
-    datetime_utc : datetime
+    datetime_utc : numpy.datetime64
         start date/time of image stream, in UTC
-        
-    timestamps_utc : np.array[datetime64]
+        Use .item() to convert to datetime
+
+    timestamps_utc : np.array[numpy.datetime64]
         numpy array including timestamps for all frames, if present
 
     Parameters
@@ -184,9 +188,7 @@ class SERMovie:
             self.observer = read_str(f, 40)
             self.instrument = read_str(f, 40)
             self.telescope = read_str(f, 40)
-            self.datetime = self.timestamp(np.array([read_int64(f)]))[
-                0
-            ]  # .item() converts to datetime()
+            self.datetime = self.timestamp(np.array([read_int64(f)]))[0]
             self.datetime_utc = self.timestamp(np.array([read_int64(f)]))[0]
 
             assert (
@@ -198,7 +200,8 @@ class SERMovie:
             num_ts = self.timestamps_utc.shape[0]
             if num_ts > 0 and num_ts != self.frames:
                 warnings.warn(
-                    f"Number of timestamps at trailer ({num_ts}) does not match the number of frames specified in the header ({self.frames})"
+                    f"Number of timestamps at trailer ({num_ts}) does not match the "
+                    f"number of frames specified in the header ({self.frames})"
                 )
 
             self.f = None
@@ -210,11 +213,10 @@ class SERMovie:
         # datetime support up to microsecond resolution; here we simply truncate the last digit
         # because we won't be working as such time resolution anyway.
         # This is a vectorized version of: timedelta(microseconds=tdelta64_100ns//10) + datetime(1, 1, 1)
-        # Note: numpy.datetime64 won't store timezone info, so it does makes sense to create the 
+        # Note: numpy.datetime64 won't store timezone info, so it does makes sense to create the
         # reference date as datetime(1, 1, 1, tzinfo=timezone.utc)
-        return (tdelta64_100ns // 10).astype("timedelta64[us]") + np.datetime64(
-            datetime(1, 1, 1)
-        )
+        ref = np.datetime64(datetime(1, 1, 1))
+        return (tdelta64_100ns // 10).astype("timedelta64[us]") + ref
 
     def __enter__(self):
         self.f = open(self.fname, "rb")
@@ -224,10 +226,10 @@ class SERMovie:
         self.f.close()
         self.f = None
 
-    def getFrame(self, frame):
+    def get_frame(self, frame):
         if frame >= self.frames:
             raise ValueError(
-                f"Requested frame ({frame}) out of range ({frames} frames)"
+                f"Requested frame ({frame}) out of range ({self.frames} frames)"
             )
 
         frame_start = self.header_size + frame * self.frame_bytes
@@ -256,10 +258,11 @@ class SERMovie:
 
     def close_memmap(self):
         # TODO: can cause kernel crashes
+        #   https://github.com/numpy/numpy/issues/13510
         if self.mmap is not None and not self.mmap._mmap.closed:
             self.mmap._mmap.close()
         else:
-            warning.warn("Nothing to close")
+            warnings.warn("Nothing to close")
 
     def __str__(self):
         return (
